@@ -79,7 +79,7 @@ find your answers here.
 How do I install it?
 --------------------
 
-``pip install flask-cuttlepool``
+``pip install git+https://github.com/smitchell556/flask-cuttlepool.git``
 
 Contributing
 ------------
