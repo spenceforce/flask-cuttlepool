@@ -7,7 +7,7 @@ example given in the `Flask Extension Development
 :license: BSD 3-clause, see LICENSE for details.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0-dev'
 
 
 from cuttlepool import CuttlePool, CuttlePoolError
