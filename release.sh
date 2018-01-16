@@ -46,7 +46,7 @@ function build() {
 
 function test_pypi() {
     echo -e "test_pypi\t$1\t$2" > $RESUME
-    twine upload --repository-url https://test.pypi.org/legacy dist/*
+    twine upload --repository-url https://test.pypi.org/legacy/ dist/*
     if [ $? -ne 0 ]
     then
 	echo "release: Problem uploading to TestPyPI." >&2
