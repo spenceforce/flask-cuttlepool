@@ -11,18 +11,18 @@ UNRELEASED='Unreleased'
 DATE=$(date +%Y-%m-%d)
 INCREMENT=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
-function clean_build() {
+function clean_build {
     rm -rf build/ dist/ *.egg-info
 }
 
-function resume_release() {
+function resume_release {
     # Resume release process.
     read -a info < $RESUME
     ${info[0]} ${info[@]:1}
     exit 0
 }
 
-function new_version() {
+function new_version {
     v=(${2//./ })
     case $1 in
 	"major") echo "$(expr ${v[0]} + 1).0.0-dev" ;;
@@ -32,7 +32,7 @@ function new_version() {
     esac
 }
 
-function build() {
+function build {
     echo -e "build\t$1\t$2" > $RESUME
     python setup.py sdist bdist_wheel
     if [ $? -ne 0 ]
@@ -44,7 +44,7 @@ function build() {
     test_pypi $1 $2
 }
 
-function test_pypi() {
+function test_pypi {
     echo -e "test_pypi\t$1\t$2" > $RESUME
     twine upload --repository-url https://test.pypi.org/legacy/ dist/*
     if [ $? -ne 0 ]
@@ -55,7 +55,7 @@ function test_pypi() {
     pypi $1 $2
 }
 
-function pypi() {
+function pypi {
     echo -e "pypi\t$1\t$2" > $RESUME
     twine upload dist/*
     if [ $? -ne 0 ]
@@ -66,7 +66,7 @@ function pypi() {
     git_push $1 $2
 }
 
-function git_push() {
+function git_push {
     echo -e "git_push\t$1\t$2" > $RESUME
     branch=$(git rev-parse --abbrev-ref HEAD)
     git push origin "$branch"
@@ -78,7 +78,7 @@ function git_push() {
     git_push_tag $1 $2
 }
 
-function git_push_tag() {
+function git_push_tag {
     echo -e "git_push_tag\t$1\t$2" > $RESUME
     git push origin "v$2"
     if [ $? -ne 0 ]
@@ -89,7 +89,7 @@ function git_push_tag() {
     prepare_development $1 $2
 }
 
-function prepare_development() {
+function prepare_development {
     echo -e "prepare_development\t$1\t$2" > $RESUME
     DEV_VERSION=$(new_version $1 $2)
     # Update changelog.
@@ -129,7 +129,7 @@ function prepare_development() {
     git_push_development
 }
 
-function git_push_development() {
+function git_push_development {
     echo -e "git_push_development" > $RESUME
     branch=$(git rev-parse --abbrev-ref HEAD)
     git push origin "$branch"
@@ -140,7 +140,7 @@ function git_push_development() {
     fi
 
     rm -f $RESUME
-    cleanup_build
+    clean_build
     exit 0
 }
 
