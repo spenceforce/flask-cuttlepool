@@ -10,7 +10,7 @@ example given in the `Flask Extension Development
 __version__ = '0.2.0-dev'
 
 
-from cuttlepool import CuttlePool, CuttlePoolError
+from cuttlepool import CuttlePool, CuttlePoolError, PoolConnection
 
 # Find the stack on which we want to store the database connection.
 # Starting with Flask 0.9, the _app_ctx_stack is the correct one,
