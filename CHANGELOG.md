@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Import `PoolConnection` for simple, uniform import from `flask_cuttlepool` by
   ([#4](https://github.com/smitchell556/flask-cuttlepool/pull/4))
 
-## [0.1.0] - 2018-01-15
+## 0.1.0 - 2018-01-15
 ### Added
 - Initial Flask-CuttlePool code.
 
