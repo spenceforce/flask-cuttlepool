@@ -52,6 +52,13 @@ function test_pypi {
 	echo "release: Problem uploading to TestPyPI." >&2
 	exit 1
     fi
+
+    # Let user ensure package can be installed from Test PYPi.
+    read -p "Can package be installed from TestPYPi properly? [y/N] " resp
+    case $resp in
+	[yY] ) ;;
+	*) echo "release: Pausing release. Release script will resume from this point." >&2; exit 1;;
+    esac
     pypi $1 $2
 }
 
@@ -92,11 +99,20 @@ function git_push_tag {
 function prepare_development {
     echo -e "prepare_development\t$1\t$2" > $RESUME
     DEV_VERSION=$(new_version $1 $2)
-    # Update changelog.
-    sed -i "/\[$2\]/i## [$UNRELEASED]\n" CHANGELOG.md
+    # Update changelog unreleased header.
+    sed -i "/## \[$2\]/i## [$UNRELEASED]\n" CHANGELOG.md
     if [ $? -ne 0 ]
     then
 	git checkout HEAD -- CHANGELOG.md
+	echo "release: Problem updating CHANGELOG.md for development." >&2
+	exit 1
+    fi
+
+    # Update version compare link.
+    sed -i "/\[$2\]:/i\[$UNRELEASED\]: https://github.com/smitchell556/flask-cuttlepool/compare/v${$2}...HEAD" CHANGELOG.md
+    if [ $? -ne 0 ]
+    then
+	git checkout HEAD --CHANGELOG.md
 	echo "release: Problem updating CHANGELOG.md for development." >&2
 	exit 1
     fi
@@ -179,15 +195,25 @@ VERSION=${DEV_VERSION%.*}
 
 # Begin release process.
 
-# Update changelog.
-count=$(gawk -v old="\\\\[$UNRELEASED\\\\]" -v new="[$VERSION] - $DATE" '{ count+=gsub(old, new) } END{ print count }' CHANGELOG.md)
-if [ $count -ne 1 ]
+# Update changelog unreleased header.
+sed -i "s/## \[$UNRELEASED\]/## \[$VERSION\] - $DATE/" CHANGELOG.md
+if [ $? -ne 0 ]
 then
-    echo "release: Improper number of replacements in CHANGELOG.md $count" >&2
+    git checkout HEAD -- CHANGELOG.md
+    echo "release: Problem updating CHANGELOG.md." >&2
     exit 1
 fi
 
-gawk -i inplace -v old="\\\\[$UNRELEASED\\\\]" -v new="[$VERSION] - $DATE" '{ gsub(old, new) }; { print }' CHANGELOG.md
+# Update version compare link.
+sed -i "s/\[$UNRELEASED\]/\[$VERSION\]/" CHANGELOG.md
+if [ $? -ne 0 ]
+then
+    git checkout HEAD -- CHANGELOG.md
+    echo "release: Problem updating CHANGELOG.md." >&2
+    exit 1
+fi
+
+sed -i "s/...HEAD/...$VERSION/" CHANGELOG.md
 if [ $? -ne 0 ]
 then
     git checkout HEAD -- CHANGELOG.md
@@ -196,17 +222,11 @@ then
 fi
 
 # Update version.
-count=$(gawk -v old="__version__ = [\"']${VERSION}-dev[\"']" -v new="__version__ = '${VERSION}'" '{ count+=gsub(old, new) } END{ print count }' flask_cuttlepool.py)
-if [ $count -ne 1 ]
-then
-    echo "release: Improper number of replacements in flask_cuttlepool.py $count" >&2
-    exit 1
-fi
-gawk -i inplace -v old="__version__ = [\"']${VERSION}-dev[\"']" -v new="__version__ = '${VERSION}'" '{ gsub(old, new) }; { print }' flask_cuttlepool.py
+sed -i "s/${VERSION}-dev/$VERSION/" flask_cuttlepool.py
 if [ $? -ne 0 ]
 then
     git checkout HEAD -- CHANGELOG.md flask_cuttlepool.py
-    echo "release: Problem updating __version__ in flask_cuttlepool.py." >&2
+    echo "release: Problem updating __version__ in flask_cuttlepool.py for development." >&2
     exit 1
 fi
 
