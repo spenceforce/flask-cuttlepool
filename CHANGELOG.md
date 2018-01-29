@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
   ([#4](https://github.com/smitchell556/flask-cuttlepool/pull/4)).
 ### Changed
 - Upgrade minimum version of `cuttlepool` to 0.6.0.
+- Get all configuration options starting with `CUTTLEPOOL_` from `app.config`
+  instead of explicitly passing them to `__init__()` or `init_app()`.
 
 ## 0.1.0 - 2018-01-15
 ### Added

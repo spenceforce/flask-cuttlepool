@@ -46,9 +46,9 @@ def app(user, password, host):
     app = Flask(__name__)
     app.testing = True
     app.config.update(
-        SQL_USER=user,
-        SQL_PASSWORD=password,
-        SQL_HOST=host
+        CUTTLEPOOL_USER=user,
+        CUTTLEPOOL_PASSWORD=password,
+        CUTTLEPOOL_HOST=host
     )
     return app
 
@@ -92,10 +92,7 @@ def test_init_with_app(app, user, password, host):
 
 def test_init_app(app, pool_no_app, user, password, host):
     """Test init_app method."""
-    pool_no_app.init_app(app,
-                         user=app.config['SQL_USER'],
-                         password=app.config['SQL_PASSWORD'],
-                         host=app.config['SQL_HOST'])
+    pool_no_app.init_app(app)
     pool = pool_no_app          # since the pool has been initialized, this name fits better.
 
     con_args = pool._connection_arguments
