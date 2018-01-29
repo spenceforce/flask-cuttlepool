@@ -12,6 +12,13 @@ __version__ = '0.2.0-dev'
 
 from cuttlepool import CuttlePool, CuttlePoolError, PoolConnection
 
+try:
+    from cuttlepool import _CAPACITY, _OVERFLOW, _TIMEOUT
+except ImportError:
+    # Compatibility for cuttlepool-0.5.1
+    from cuttlepool import (CAPACITY as _CAPACITY, OVERFLOW as _OVERFLOW,
+                            TIMEOUT as _TIMEOUT)
+
 # Find the stack on which we want to store the database connection.
 # Starting with Flask 0.9, the _app_ctx_stack is the correct one,
 # before that we need to use the _request_ctx_stack.
@@ -21,27 +28,29 @@ except ImportError:
     from flask import _request_ctx_stack as stack
 
 
-class FlaskCuttlePool(CuttlePool):
-
+class FlaskCuttlePool(object):
     """
     An SQL connection pool for Flask applications.
 
     :param func connect: The ``connect`` function of the chosen sql driver.
-    :param int capacity: Max number of connections in pool. Defaults to ``5``.
+    :param int capacity: Max number of connections in pool. Defaults to ``1``.
     :param int timeout: Time in seconds to wait for connection. Defaults to
         ``None``.
     :param int overflow: The number of extra connections that can be made if
-        the pool is exhausted. Defaults to ``1``.
+        the pool is exhausted. Defaults to ``0``.
     :param Flask app: A Flask ``app`` object. Defaults to ``None``.
     :param \**kwargs: Connection arguments for the underlying database
         connector.
     """
 
-    def __init__(self, connect, capacity=5, overflow=1,
-                 timeout=None, app=None, **kwargs):
+    def __init__(self, connect, capacity=_CAPACITY, overflow=_OVERFLOW,
+                 timeout=_TIMEOUT, app=None, **kwargs):
         self._app_set = False
-        super(FlaskCuttlePool, self)\
-            .__init__(connect, capacity, overflow, timeout, **kwargs)
+        self._connect = connect,
+        self._capacity = capacity
+        self._timeout = timeout
+        self._app = app
+        self._connection_arguments = kwargs
 
         if app is not None:
             self.init_app(app)

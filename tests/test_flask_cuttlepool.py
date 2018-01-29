@@ -12,17 +12,8 @@ except ImportError:
     from flask import _request_ctx_stack as stack
 
 import mocksql
-from cuttlepool import PoolConnection
-from flask_cuttlepool import FlaskCuttlePool, AppUninitializedError
-
-
-class MockPool(FlaskCuttlePool):
-
-    def normalize_connection(self, connection):
-        pass
-
-    def ping(self, connection):
-        return connection.open
+from flask_cuttlepool import (_CAPACITY, _OVERFLOW, _TIMEOUT, FlaskCuttlePool,
+                              PoolConnection, AppUninitializedError)
 
 
 @pytest.fixture
@@ -55,20 +46,22 @@ def app(user, password, host):
 
 @pytest.fixture
 def pool_no_app():
-    return MockPool(mocksql.connect)
+    return FlaskCuttlePool(mocksql.connect)
 
 
 @pytest.fixture
 def pool(app):
-    pool = MockPool(mocksql.connect, app=app, user=user, password=password, host=host)
+    pool = FlaskCuttlePool(mocksql.connect, app=app)
     return pool
 
 
 def test_init_no_app(user, password, host):
     """Test FlaskCuttlePool instantiates properly without an app object."""
-    pool = MockPool(mocksql.connect, user=user, password=password, host=host)
+    pool = FlaskCuttlePool(mocksql.connect, user=user, password=password, host=host)
     assert isinstance(pool, FlaskCuttlePool)
-    assert pool._capacity == 5
+    assert pool._capacity == _CAPACITY
+    assert pool._overflow == _OVERFLOW
+    assert pool._timeout == _TIMEOUT
 
     con_args = pool._connection_arguments
 
@@ -79,9 +72,11 @@ def test_init_no_app(user, password, host):
 
 def test_init_with_app(app, user, password, host):
     """Test FlaskCuttlePool instantiates properly with an app object."""
-    pool = MockPool(mocksql.connect, app=app, user=user, password=password, host=host)
+    pool = FlaskCuttlePool(mocksql.connect, app=app, user=user, password=password, host=host)
     assert isinstance(pool, FlaskCuttlePool)
-    assert pool._capacity == 5
+    assert pool._capacity == _CAPACITY
+    assert pool._overflow == _OVERFLOW
+    assert pool._timeout == _TIMEOUT
 
     con_args = pool._connection_arguments
 
