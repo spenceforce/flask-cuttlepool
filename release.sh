@@ -226,7 +226,7 @@ sed -i "s/${VERSION}-dev/$VERSION/" flask_cuttlepool.py
 if [ $? -ne 0 ]
 then
     git checkout HEAD -- CHANGELOG.md flask_cuttlepool.py
-    echo "release: Problem updating __version__ in flask_cuttlepool.py for development." >&2
+    echo "release: Problem updating __version__ in flask_cuttlepool.py." >&2
     exit 1
 fi
 
