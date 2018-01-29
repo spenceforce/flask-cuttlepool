@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## [Unreleased]
 ### Added
 - Import `PoolConnection` for simple, uniform import from `flask_cuttlepool` by
-  ([#4](https://github.com/smitchell556/flask-cuttlepool/pull/4))
+  ([#4](https://github.com/smitchell556/flask-cuttlepool/pull/4)).
+### Changed
+- Upgrade minimum version of `cuttlepool` to 0.6.0.
 
 ## 0.1.0 - 2018-01-15
 ### Added

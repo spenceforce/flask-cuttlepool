@@ -29,7 +29,7 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'cuttlepool>=0.5.1',
+        'cuttlepool>=0.6.0',
         'flask'
     ],
     extras_require={
