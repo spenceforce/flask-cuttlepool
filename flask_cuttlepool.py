@@ -37,11 +37,12 @@ class FlaskCuttlePool(object):
     An SQL connection pool for Flask applications.
 
     :param func connect: The ``connect`` function of the chosen sql driver.
-    :param int capacity: Max number of connections in pool. Defaults to ``1``.
-    :param int timeout: Time in seconds to wait for connection. Defaults to
-        ``None``.
+    :param int capacity: Max number of connections in pool. Uses ``CuttlePool``
+        default as default value.
+    :param int timeout: Time in seconds to wait for connection. Uses
+        ``CuttlePool`` default as default value.
     :param int overflow: The number of extra connections that can be made if
-        the pool is exhausted. Defaults to ``0``.
+        the pool is exhausted. Uses ``CuttlePool`` default as default value.
     :param Flask app: A Flask ``app`` object. Defaults to ``None``.
     :param \**kwargs: Connection arguments for the underlying database
         connector.
@@ -187,9 +188,8 @@ class FlaskCuttlePool(object):
                     ctx.cuttlepool_connection._connection is None):
                 ctx.cuttlepool_connection = self.get_connection()
 
-            else:
-                if not self.get_pool().ping(ctx.cuttlepool_connection):
-                    ctx.cuttlepool_connection.close()
-                    ctx.cuttlepool_connection = self.connection
+            elif not self.get_pool().ping(ctx.cuttlepool_connection):
+                ctx.cuttlepool_connection.close()
+                ctx.cuttlepool_connection = self.connection
 
             return ctx.cuttlepool_connection
