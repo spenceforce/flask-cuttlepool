@@ -111,7 +111,6 @@ def test_init_no_app(user, password, host):
     assert pool._cuttlepool_kwargs['capacity'] == _CAPACITY
     assert pool._cuttlepool_kwargs['overflow'] == _OVERFLOW
     assert pool._cuttlepool_kwargs['timeout'] == _TIMEOUT
-
     assert pool._cuttlepool_kwargs['user'] == user
     assert pool._cuttlepool_kwargs['password'] == password
     assert pool._cuttlepool_kwargs['host'] == host
@@ -123,25 +122,7 @@ def test_init_with_app(app, pool_one, user, password, host):
     assert pool_one._cuttlepool_kwargs['capacity'] == _CAPACITY
     assert pool_one._cuttlepool_kwargs['overflow'] == _OVERFLOW
     assert pool_one._cuttlepool_kwargs['timeout'] == _TIMEOUT
-
-
-def test_attach_pool(app):
-    """Tests that a pool is properly attached to the app object."""
-    pool = FlaskCuttlePool(mocksql.connect)
-    pool._attach_pool(app)
-    assert app.extensions['cuttlepool'][0] is pool
-    assert isinstance(app.extensions['cuttlepool'][1], CuttlePool)
-
-
-def test_attach_pool_twice(app):
-    """
-    Tests that a RuntimeError is raised when a pool is attached to an app more
-    than once.
-    """
-    pool = FlaskCuttlePool(mocksql.connect)
-    pool._attach_pool(app)
-    with pytest.raises(RuntimeError):
-        pool._attach_pool(app)
+    assert app in pool_one._apps
 
 
 def test_get_app_no_init(app):
@@ -192,9 +173,9 @@ def test_get_pool_different_apps_and_pools(app, app2):
     """
     pool1 = FlaskCuttlePool(mocksql.connect, app=app)
     pool2 = FlaskCuttlePool(mocksql.connect, app=app2)
-    
+
     with app2.app_context():
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError):
             p = pool1.get_pool()
 
 

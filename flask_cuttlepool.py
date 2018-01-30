@@ -52,6 +52,7 @@ class FlaskCuttlePool(object):
                  timeout=_TIMEOUT, app=None, **kwargs):
         self._connect = connect
         self._app = app
+        self._apps = []
         self._cuttlepool_kwargs = kwargs
         self._cuttlepool_kwargs.update(capacity=capacity,
                                        overflow=overflow,
@@ -64,10 +65,10 @@ class FlaskCuttlePool(object):
 
     def init_app(self, app):
         """
-        Attaches a connection pool and a teardown handler to the ``app``
-        object. All configuration options on ``app.config`` of the form
-        ``CUTTLEPOOL_<KEY>`` will be used as connection arguments for the
-        underlying driver. ``<KEY>`` will be converted to lowercase such that
+        Attaches a teardown handler to the ``app`` object. All configuration
+        options on ``app.config`` of the form ``CUTTLEPOOL_<KEY>`` will be
+        used as connection arguments for the underlying driver. ``<KEY>`` will
+        be converted to lowercase such that
         ``app.config['CUTTLEPOOL_<KEY>'] = <value>`` will be passed to the
         connection driver as ``<key>=<value>``.
 
@@ -82,7 +83,7 @@ class FlaskCuttlePool(object):
         # pool will connect to steakhouse instead.
         pool.init_app(app)
         """
-        self._attach_pool(app)
+        self._apps.append(app)
         # Use the newstyle teardown_appcontext if it's available,
         # otherwise fall back to the request context.
         if hasattr(app, 'teardown_appcontext'):
@@ -90,21 +91,13 @@ class FlaskCuttlePool(object):
         else:
             app.teardown_request(self.teardown)
 
-    def _attach_pool(self, app):
-        """Attaches a pool to the ``app`` object."""
-        with self._lock:
-            if not hasattr(app, 'extensions'):
-                app.extensions = {}
+        if not hasattr(app, 'extensions'):
+            app.extensions = {}
 
-            if 'cuttlepool' not in app.extensions:
-                # Attach self and CuttlePool instance to app object. self is
-                # attached to ensure that a FlaskCuttlePool instance is not
-                # retrieving CuttlePool instances from apps it shouldn't have
-                # access to.
-                app.extensions['cuttlepool'] = (self, self._make_pool(app))
-            else:
-                raise RuntimeError('A pool has already been attached to this app.')
+        if hasattr(app.extensions, 'cuttlepool'):
+            raise RuntimeError('A pool has already been attached to this app.')
 
+        app.extensions['cuttlepool'] = None
 
     def _get_app(self):
         """
@@ -112,12 +105,18 @@ class FlaskCuttlePool(object):
         ``__init__()``
         """
         if current_app:
-            return current_app._get_current_object()
+            app = current_app._get_current_object()
+        elif self._app is not None:
+            app = self._app
+        else:
+            raise RuntimeError('No application found.')
 
-        if self._app is not None:
-            return self._app
+        if app not in self._apps:
+            raise RuntimeError('This FlaskCuttlePool instance does not have '
+                               'access to the current app. Initialize the app '
+                               'on the instance with init_app().')
 
-        raise RuntimeError('No application found.')
+        return app
 
     def _make_pool(self, app):
         """
@@ -135,7 +134,6 @@ class FlaskCuttlePool(object):
 
         return CuttlePool(self._connect, **kwargs)
 
-
     def cursor(self):
         """Gets a cursor from the connection on the appplication context."""
         return self.connection.cursor()
@@ -146,20 +144,21 @@ class FlaskCuttlePool(object):
         responsible for calling the ``close()`` method on the
         ``PoolConnection`` object.
         """
-        pool = self.get_pool()
-        return pool.get_connection()
+        return self.get_pool().get_connection()
 
     def get_pool(self):
-        """Gets the pool on the current application."""
+        """
+        Gets the pool on the current application. Creates the pool is one
+        doesn't exist.
+        """
         app = self._get_app()
 
         with self._lock:
-            flask_cp, pool = app.extensions['cuttlepool']
+            pool = app.extensions['cuttlepool']
 
-            if flask_cp is not self:
-                raise ValueError(('Attempting to retrieve connection pool '
-                                  'from a different FlaskCuttlePool '
-                                  'instance.'))
+            if pool is None:
+                pool = self._make_pool(app)
+                app.extensions['cuttlepool'] = pool
 
             return pool
 
