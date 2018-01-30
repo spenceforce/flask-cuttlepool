@@ -125,6 +125,25 @@ def test_init_with_app(app, pool_one, user, password, host):
     assert pool_one._cuttlepool_kwargs['timeout'] == _TIMEOUT
 
 
+def test_attach_pool(app):
+    """Tests that a pool is properly attached to the app object."""
+    pool = FlaskCuttlePool(mocksql.connect)
+    pool._attach_pool(app)
+    assert app.extensions['cuttlepool'][0] is pool
+    assert isinstance(app.extensions['cuttlepool'][1], CuttlePool)
+
+
+def test_attach_pool_twice(app):
+    """
+    Tests that a RuntimeError is raised when a pool is attached to an app more
+    than once.
+    """
+    pool = FlaskCuttlePool(mocksql.connect)
+    pool._attach_pool(app)
+    with pytest.raises(RuntimeError):
+        pool._attach_pool(app)
+
+
 def test_get_app_no_init(app):
     """
     Tests the ``app`` is returned when ``app`` is only passed to pool
@@ -156,21 +175,33 @@ def test_get_app_no_app():
 def test_get_pool(pool_two, app, app2):
     """Tests the proper pool is retreived."""
     with app.app_context():
-        pool1 = pool_two._get_pool()
+        pool = pool_two.get_pool()
 
     # Ensure same pool is returned again.
     with app.app_context():
-        assert pool1 is pool_two._get_pool()
+        assert pool is pool_two.get_pool()
 
     # Ensure different pool for different app.
     with app2.app_context():
-        assert pool1 is not pool_two._get_pool()
+        assert pool is not pool_two.get_pool()
 
 
-def test_make_pool(app, pool_one, user, password, host):
+def test_get_pool_different_apps_and_pools(app, app2):
+    """
+    Tests that connection pools are stored correctly for each pool, app pair.
+    """
+    pool1 = FlaskCuttlePool(mocksql.connect, app=app)
+    pool2 = FlaskCuttlePool(mocksql.connect, app=app2)
+    
+    with app2.app_context():
+        with pytest.raises(ValueError):
+            p = pool1.get_pool()
+
+
+def test_make_pool(app, user, password, host):
     """Tests _make_pool method."""
-    with app.app_context():
-        p = pool_one._make_pool()
+    pool = FlaskCuttlePool(mocksql.connect)
+    p = pool._make_pool(app)
 
     assert isinstance(p, CuttlePool)
 
