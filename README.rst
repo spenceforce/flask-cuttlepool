@@ -2,7 +2,7 @@
 Flask-CuttlePool
 ################
 
-Flask-CuttlePool provides a convenient interface for using `CuttlePool
+Flask-CuttlePool provides a convenient interface for using `Cuttle Pool
 <https://github.com/smitchell556/cuttlepool>`_ with Flask.
 
 How-to Guide
@@ -10,64 +10,58 @@ How-to Guide
 
 If you haven't read the `How-to Guide
 <https://github.com/smitchell556/cuttlepool#how-to-guide>`_ for CuttlePool, you
-really should before going any further. ``FlaskCuttlePool``
+really should before going any further.
 
-``FlaskCuttlePool`` should be subclassed in the same way. The only difference in
-use is how the pool is initialized and how connections are returned to the
-pool. ``FlaskCuttlePool`` accepts retains all the same ``__init__()``
-parameters as ``CuttlePool``. Assume we have the following pool class (and an
-app object of course) ::
+``FlaskCuttlePool`` objects accept the same arguments as ``CuttlePool``
+objects, as well as a Flask ``app`` object. Assume we have the following
+imports and ``app`` object. ::
 
   import sqlite3
 
   from flask import Flask
   from flask_cuttlepool import FlaskCuttlePool
   
-  class SQLitePool(FlaskCuttlePool):
-       def normalize_connection(self, connection):
-           connection.row_factory = None
-       def ping(self, connection):
-           try:
-               rv = connection.execute('SELECT 1').fetchall()
-               return (1,) in rv
-           except sqlite3.Error:
-               return False
 
   app = Flask(__name__)
 
 
 There are two ways to set up a pool object. On pool initialization ::
 
-  pool = SQLitePool(sqlite3.connect, app=app, database='ricks_lab')
+  pool = FlaskCuttlePool(sqlite3.connect, app=app, database='ricks_lab')
 
 or using ``init_app()`` explicitly ::
 
-  pool = SQLitePool(sqlite3.connect, database='ricks_lab')
+  pool = FlaskCuttlePool(sqlite3.connect)
   pool.init_app(app)
 
-``init_app()`` also accepts connection arguments for the underlying SQL driver.
-So if the database name was stored in ``app.config`` and ``app`` wasn't
-instantiated until after ``SQLitePool``, set up would look like this ::
+Any configuration keys that start with ``CUTTLEPOOL_`` will be converted to a
+key value pair. If the key already exists in the initial arguments passed to
+the ``__init__()`` method, those will be superceded by the value on
+``app.config``. For example ::
 
-  pool = SQLitePool(sqlite3.connect)
-  ...  # additional set up code
-  app = Flask(__name__)
-  app.from_pyfile('config.cfg')
-  pool.init_app(app, database=app.config['DATABASE'])
+  pool = FlaskCuttlePool(sqlite3.connect, database='ricks_lab')
+  app.config['CUTTLEPOOL_DATABASE'] = 'citadel_of_ricks'
+  pool.init_app(app)
+
+will result in the connection pool associated with that ``app`` object
+connecting to ``'citadel_of_ricks'`` instead of ``'ricks_lab'``. Every key
+value pair on ``app.config`` of the form ``app.config['CUTTLEPOOL_KEY'] =
+value`` is passed to the pool constructor as ``key=value`` where ``key`` is
+lowercase.
 
 Now the pool can be used as normal. Any calls to ``get_connection()`` will
-store the connection in the application context and the connection will be
-returned to the pool when the application context is torn down. If a connection
-is stored on the application context, calls to ``get_connection()`` will return
-that connection. There is no need to call ``close()`` on the
-``PoolConnection()`` object, although it's ok if the connection is explicitly
-closed.
+return a connection in the same manner a ``CuttlePool`` object would.
 
-If for some reason, you do not want to store the connection on the application
-context or you need multiple connections at the same time,
-``get_fresh_connection()`` will get a connection from the pool and won't store
-it on the application context. Any connection retrieved from
-``get_fresh_connection()`` should be explicitly closed.
+To make things more convenient, the ``connection`` getter will store a
+connection on the application context and reuse that connection whenever the
+``connection`` getter is called again. When the application context is torn
+down, the connection will be returned to the pool. Therefore, there is no need
+to call ``close()`` on a connection retrieved from the ``connection`` getter,
+but it's ok if ``close()`` is called. Connections retrieved with
+``get_connection()`` should be explicitly closed.
+
+The convenience method ``cursor()`` will return a ``Cursor`` instance for the
+connection stored on the application context.
 
 FAQ
 ===
@@ -80,6 +74,13 @@ How do I install it?
 --------------------
 
 ``pip install flask-cuttlepool``
+
+What is an application contexts?
+--------------------------------
+
+This is a Flask extension, so it is meant to be used in the context of a Flask
+application. See `here <http://http://flask.pocoo.org/docs/appcontext/>`_ to
+learn about Flask's application context.
 
 Contributing
 ------------
