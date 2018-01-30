@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Upgrade minimum version of `cuttlepool` to 0.6.0.
 - Get all configuration options starting with `CUTTLEPOOL_` from `app.config`
   instead of explicitly passing them to `__init__()` or `init_app()`.
+### Removed
+- Custom exceptions.
 
 ## 0.1.0 - 2018-01-15
 ### Added
