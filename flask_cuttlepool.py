@@ -2,8 +2,9 @@
 """
 Flask extension for CuttlePool. This extension is inspired by the SQLite3
 example given in the `Flask Extension Development
-<http://flask.pocoo.org/docs/0.12/extensiondev>`_ documentation and
-`Flask-SQLAlchemy <http://flask-sqlalchemy.pocoo.org>`_.
+<http://flask.pocoo.org/docs/0.12/extensiondev>`_ documentation,
+`Flask-SQLAlchemy <http://flask-sqlalchemy.pocoo.org>`_, and `Flask-Login
+<https://flask-login.readthedocs.io>`_.
 
 :license: BSD 3-clause, see LICENSE for details.
 """
