@@ -213,7 +213,7 @@ then
     exit 1
 fi
 
-sed -i "s/...HEAD/...$VERSION/" CHANGELOG.md
+sed -i "s/...HEAD/...v$VERSION/" CHANGELOG.md
 if [ $? -ne 0 ]
 then
     git checkout HEAD -- CHANGELOG.md
