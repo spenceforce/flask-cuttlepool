@@ -49,6 +49,28 @@ value pair on ``app.config`` of the form ``app.config['CUTTLEPOOL_KEY'] =
 value`` is passed to the pool constructor as ``key=value`` where ``key`` is
 lowercase.
 
+``FlaskCuttlePool`` objects should also be provided with two callbacks. The
+``ping`` callback is used to check if a connection is still open. The
+``normalize_connection`` callback ensures each connection has the same state
+when it is retrieved from the pool. For more about these methods, see the
+`Cuttle Pool How-to Guide
+<https://github.com/smitchell556/cuttlepool#how-to-guide>`_.
+
+Continuing with the above example, these callbacks could be implemented like
+this::
+
+  @pool.ping
+  def ping(connection):
+      try:
+          rv = connection.execute('SELECT 1').fetchall()
+	  return (1,) in rv
+      except sqlite3.Error:
+          return False
+
+  @pool.normalize_connection
+  def normalize_connection(connection):
+      connection.row_factory = None
+
 Now the pool can be used as normal. Any calls to ``get_connection()`` will
 return a connection in the same manner a ``CuttlePool`` object would.
 
@@ -62,6 +84,56 @@ but it's ok if ``close()`` is called. Connections retrieved with
 
 The convenience method ``cursor()`` will return a ``Cursor`` instance for the
 connection stored on the application context.
+
+A full example looks like::
+
+  import sqlite3
+
+  from flask import Flask
+  from flask_cuttlepool import FlaskCuttlePool
+  
+
+  app = Flask(__name__)
+  app.config['CUTTLEPOOL_DATABASE'] = ':memory:'
+
+  pool = FlaskCuttlePool(sqlite3.connect)
+  pool.init_app(app)
+
+  @pool.ping
+  def ping(connection):
+      try:
+          rv = connection.execute('SELECT 1').fetchall()
+	  return (1,) in rv
+      except sqlite3.Error:
+          return False
+
+  @pool.normalize_connection
+  def normalize_connection(connection):
+      connection.row_factory = None
+
+  with app.app_context():
+      # Get a connection, store it on the application context and return to
+      # user. This connection doesn't need to be explicitly closed.
+      con = pool.connection
+      # Subsequent calls to pool.connection will get the same connection from
+      # the application context.
+      con is pool.connection   # True
+
+      # Get a different connection
+      con2 = pool.get_connection()
+      # This connection should be explicitly closed since it was retrieved by
+      # get_connection().
+      con2.close()
+
+      # Get a cursor from the connection on the application context.
+      cur = pool.cursor()
+      cur.execute(SOME_SQL)
+      cur.close()
+      pool.connection.commit()
+
+  # Now the application context has been torn down, so the connection has been
+  # returned to the pool.
+  pool.connection is None  # True
 
 FAQ
 ===
