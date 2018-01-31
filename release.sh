@@ -109,7 +109,7 @@ function prepare_development {
     fi
 
     # Update version compare link.
-    sed -i "/\[$version\]:/i\[$UNRELEASED\]: https:\/\/github\.com\/smitchell556\/flask-cuttlepool\/compare\/v${version}\.\.\.HEAD" CHANGELOG.md
+    sed -i "/\[$2\]:/i\[$UNRELEASED\]: https:\/\/github\.com\/smitchell556\/flask-cuttlepool\/compare\/v${2}\.\.\.HEAD" CHANGELOG.md
     if [ $? -ne 0 ]
     then
 	git checkout HEAD -- CHANGELOG.md
