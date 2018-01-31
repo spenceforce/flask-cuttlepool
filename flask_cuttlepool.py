@@ -20,7 +20,7 @@ from flask import current_app
 try:
     from cuttlepool import _CAPACITY, _OVERFLOW, _TIMEOUT
 except ImportError:
-    # Compatibility for cuttlepool-0.5.1
+    # Compatibility for cuttlepool-0.6.0
     from cuttlepool import (CAPACITY as _CAPACITY, OVERFLOW as _OVERFLOW,
                             TIMEOUT as _TIMEOUT)
 
