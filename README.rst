@@ -121,6 +121,7 @@ A full example looks like::
 
       # Get a different connection
       con2 = pool.get_connection()
+      con2 is con   # False
       # This connection should be explicitly closed since it was retrieved by
       # get_connection().
       con2.close()
@@ -133,7 +134,7 @@ A full example looks like::
 
   # Now the application context has been torn down, so the connection has been
   # returned to the pool.
-  pool.connection is None  # True
+  pool.connection is None   # True
 
 FAQ
 ===
