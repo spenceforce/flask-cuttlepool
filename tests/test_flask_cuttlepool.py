@@ -69,10 +69,23 @@ def app2(user2, password2, host2):
     return create_app(user2, password2, host2)
 
 
+def add_decorators(p):
+    """Adds ping and normalize decorators to pool."""
+    @p.ping
+    def ping(con):
+        return True
+
+    @p.normalize_connection
+    def normalize(con):
+        pass
+
+
 @pytest.fixture
 def pool_no_app():
     """Pool with no app."""
-    return FlaskCuttlePool(mocksql.connect)
+    p = FlaskCuttlePool(mocksql.connect)
+    add_decorators(p)
+    return p
 
 
 @pytest.fixture(params=[1, 2])
@@ -85,6 +98,8 @@ def pool_one(request, app):
         # Pool initialized with app in init_app() only.
         pool = FlaskCuttlePool(mocksql.connect)
         pool.init_app(app)
+
+    add_decorators(pool)
     return pool
 
 
@@ -101,12 +116,15 @@ def pool_two(request, app, app2):
         pool = FlaskCuttlePool(mocksql.connect)
         pool.init_app(app)
         pool.init_app(app2)
+
+    add_decorators(pool)
     return pool
 
 
 def test_init_no_app(user, password, host):
     """Test FlaskCuttlePool instantiates properly without an app object."""
     pool = FlaskCuttlePool(mocksql.connect, user=user, password=password, host=host)
+    add_decorators(pool)
     assert isinstance(pool, FlaskCuttlePool)
     assert pool._cuttlepool_kwargs['capacity'] == _CAPACITY
     assert pool._cuttlepool_kwargs['overflow'] == _OVERFLOW
@@ -131,6 +149,7 @@ def test_get_app_no_init(app):
     ``__init__()``.
     """
     pool = FlaskCuttlePool(mocksql.connect, app=app)
+    add_decorators(pool)
     # Test in app context.
     with app.app_context():
         assert pool._get_app() is app
@@ -149,6 +168,7 @@ def test_get_app_multiple(pool_two, app, app2):
 def test_get_app_no_app():
     """Tests an error is raised when there is no app."""
     pool = FlaskCuttlePool(mocksql.connect)
+    add_decorators(pool)
     with pytest.raises(RuntimeError):
         pool._get_app()
 
@@ -172,16 +192,21 @@ def test_get_pool_different_apps_and_pools(app, app2):
     Tests that connection pools are stored correctly for each pool, app pair.
     """
     pool1 = FlaskCuttlePool(mocksql.connect, app=app)
+    add_decorators(pool1)
+    # Create another pool with a different app. The call to get_pool() by
+    # pool1 should attempt to retrieve the pool set by pool2 and fail.
     pool2 = FlaskCuttlePool(mocksql.connect, app=app2)
+    add_decorators(pool2)
 
     with app2.app_context():
         with pytest.raises(RuntimeError):
-            p = pool1.get_pool()
+            pool1.get_pool()
 
 
 def test_make_pool(app, user, password, host):
     """Tests _make_pool method."""
     pool = FlaskCuttlePool(mocksql.connect)
+    add_decorators(pool)
     p = pool._make_pool(app)
 
     assert isinstance(p, CuttlePool)
@@ -230,3 +255,34 @@ def test_cursor(app, pool_one):
     with app.app_context():
         cur = pool_one.cursor()
         assert isinstance(cur, mocksql.MockCursor)
+
+
+def test_ping_decorator(app, pool_one):
+    """Tests the ping decorator is used by the connection pool."""
+    ping_str = "Decorated ping"
+
+    @pool_one.ping
+    def ping(connection):
+        return ping_str
+
+    with app.app_context():
+        pool = pool_one.get_pool()
+        assert pool.ping(None) is ping_str
+
+
+def test_normalize_connection_decorator(app, pool_one):
+    """
+    Tests the normalize_connection decorator is used by the connection pool.
+    """
+    @pool_one.normalize_connection
+    def normalize_connection(connection):
+        connection.append(1)
+
+    con = []
+    with app.app_context():
+        pool = pool_one.get_pool()
+        pool.normalize_connection(con)
+        # Check if con is modified by normalize_connection. If it is that
+        # means the callback was successfully used by the connection pool.
+        assert len(con) == 1
+        assert con[0] == 1

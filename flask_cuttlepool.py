@@ -32,6 +32,29 @@ except ImportError:
     from flask import _request_ctx_stack as stack
 
 
+def cuttlepool_factory(ping_fn, normalize_fn):
+    """
+    Creates a CuttlePool class.
+
+    :param ping_fn: A ping function to be called by the ping method.
+    :param normalize_fn: A normalize_connection function to be called by the
+        normalize_connection method.
+    """
+    class SQLPool(CuttlePool):
+        def ping(self, connection):
+            if ping_fn is not None:
+                return ping_fn(connection)
+            return super(SQLPool, self).ping(connection)
+
+        def normalize_connection(self, connection):
+            if normalize_fn is not None:
+                normalize_fn(connection)
+            else:
+                super(SQLPool, self).normalize_connection(connection)
+
+    return SQLPool
+
+
 class FlaskCuttlePool(object):
     """
     An SQL connection pool for Flask applications.
@@ -58,6 +81,7 @@ class FlaskCuttlePool(object):
                                        overflow=overflow,
                                        timeout=timeout)
 
+        self._ping = self._normalize = self._CuttlePool = None
         self._lock = RLock()    # Necessary for multithreaded apps.
 
         if app is not None:
@@ -132,7 +156,10 @@ class FlaskCuttlePool(object):
                for k, v in app.config.items()
                if k.startswith(prefix)})
 
-        return CuttlePool(self._connect, **kwargs)
+        if self._CuttlePool is None:
+            self._CuttlePool = cuttlepool_factory(self._ping, self._normalize)
+
+        return self._CuttlePool(self._connect, **kwargs)
 
     def cursor(self):
         """Gets a cursor from the connection on the appplication context."""
@@ -162,6 +189,28 @@ class FlaskCuttlePool(object):
 
             return pool
 
+    def ping(self, fn):
+        """
+        Decorator for setting ``ping()`` method on connection pool objects. The
+        function should accept one parameter, a connection object and it should
+        check if the connection is still open. Returning ``True`` if it is,
+        otherwise ``False``.
+
+        :param fn: A function.
+        """
+        self._ping = fn
+
+    def normalize_connection(self, fn):
+        """
+        Decorator for setting ``normalize_connection()`` method on connection
+        pool objects. The function should accept one parameter, a connection
+        object and it should normalize the state of the connection to ensure
+        uniformity of connections being retrieved from the pool.
+
+        :param fn: A function.
+        """
+        self._normalize = fn
+
     def teardown(self, exception):
         """
         Calls the ``PoolConnection``'s ``close()`` method, which puts the
@@ -187,8 +236,10 @@ class FlaskCuttlePool(object):
                     ctx.cuttlepool_connection._connection is None):
                 ctx.cuttlepool_connection = self.get_connection()
 
-            elif not self.get_pool().ping(ctx.cuttlepool_connection):
-                ctx.cuttlepool_connection.close()
-                ctx.cuttlepool_connection = self.connection
+            else:
+                pool = self.get_pool()
+                if not pool.ping(ctx.cuttlepool_connection):
+                    ctx.cuttlepool_connection.close()
+                    ctx.cuttlepool_connection = self.connection
 
             return ctx.cuttlepool_connection

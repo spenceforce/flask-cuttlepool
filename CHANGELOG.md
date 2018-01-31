@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
   ([#4](https://github.com/smitchell556/flask-cuttlepool/pull/4))
 - Support for multiple Flask applications. Connection pools are created per
   application.
+- Decorators for attaching `ping()` and `normalize_connection()` methods to
+  connection pools.
 ### Changed
 - Upgrade minimum version of `cuttlepool` to 0.6.0.
 - Get all configuration options starting with `CUTTLEPOOL_` from `app.config`
