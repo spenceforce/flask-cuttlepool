@@ -163,7 +163,10 @@ class FlaskCuttlePool(object):
         return self._CuttlePool(self._connect, **kwargs)
 
     def cursor(self):
-        """Gets a cursor from the connection on the appplication context."""
+        """
+        Gets a cursor from the connection on the appplication context. It is
+        the callers responsibility to close the cursor.
+        """
         return self.connection.cursor()
 
     def get_connection(self):

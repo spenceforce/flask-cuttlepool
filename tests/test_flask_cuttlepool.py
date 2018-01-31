@@ -219,7 +219,7 @@ def test_make_pool(app, user, password, host):
 
 
 def test_get_connection(app, pool_one):
-    """Test get_connection saves the connection on the stack."""
+    """Test get_connection returns a connection."""
     with app.app_context():
         con = pool_one.get_connection()
         assert isinstance(con, PoolConnection)
@@ -231,8 +231,9 @@ def test_connection_app_ctx(app, pool_one):
         con1 = pool_one.connection
         assert hasattr(stack.top, 'cuttlepool_connection')
         con2 = pool_one.connection
-
         assert con1 is con2
+
+    assert pool_one.connection is None
 
 
 def test_connection_multiple_app_ctx(app, pool_one):
