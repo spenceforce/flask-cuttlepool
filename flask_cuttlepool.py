@@ -231,8 +231,7 @@ class FlaskCuttlePool(object):
         ctx = stack.top
 
         if ctx is not None:
-            if (not hasattr(ctx, 'cuttlepool_connection') or
-                    ctx.cuttlepool_connection._connection is None):
+            if not hasattr(ctx, 'cuttlepool_connection'):
                 ctx.cuttlepool_connection = self.get_connection()
 
             else:
