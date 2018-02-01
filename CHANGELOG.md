@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
   application.
 - Decorators for attaching `ping()` and `normalize_connection()` methods to
   connection pools.
+- Support for multiple pools per Flask app object.
 ### Changed
 - Upgrade minimum version of `cuttlepool` to 0.6.0.
 - Get all configuration options starting with `CUTTLEPOOL_` from `app.config`

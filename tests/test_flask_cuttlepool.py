@@ -140,7 +140,15 @@ def test_init_with_app(app, pool_one, user, password, host):
     assert pool_one._cuttlepool_kwargs['capacity'] == _CAPACITY
     assert pool_one._cuttlepool_kwargs['overflow'] == _OVERFLOW
     assert pool_one._cuttlepool_kwargs['timeout'] == _TIMEOUT
-    assert app in pool_one._apps
+
+
+def test_init_two_pools_one_app(app):
+    """Test two pools can be used with one app object."""
+    pool1 = FlaskCuttlePool(mocksql.connect, app=app)
+    add_decorators(pool1)
+    pool2 = FlaskCuttlePool(mocksql.connect, app=app)
+    add_decorators(pool2)
+    assert pool1.get_pool() is not pool2.get_pool()
 
 
 def test_get_app_no_init(app):

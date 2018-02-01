@@ -76,7 +76,6 @@ class FlaskCuttlePool(object):
                  timeout=_TIMEOUT, app=None, **kwargs):
         self._connect = connect
         self._app = app
-        self._apps = []
         self._cuttlepool_kwargs = kwargs
         self._cuttlepool_kwargs.update(capacity=capacity,
                                        overflow=overflow,
@@ -90,25 +89,8 @@ class FlaskCuttlePool(object):
 
     def init_app(self, app):
         """
-        Attaches a teardown handler to the ``app`` object. All configuration
-        options on ``app.config`` of the form ``CUTTLEPOOL_<KEY>`` will be
-        used as connection arguments for the underlying driver. ``<KEY>`` will
-        be converted to lowercase such that
-        ``app.config['CUTTLEPOOL_<KEY>'] = <value>`` will be passed to the
-        connection driver as ``<key>=<value>``.
-
-        :param Flask app: A Flask ``app`` object.
-
-        :Example:
-
-        # pool will connect to rons_house.
-        pool = FlaskCuttlePool(sqlite3.connect, database='rons_house')
-        app = Flask(__name__)
-        app.config['CUTTLEPOOL_DATABASE'] = 'steakhouse'
-        # pool will connect to steakhouse instead.
-        pool.init_app(app)
+        Attaches a teardown handler to the ``app`` object.
         """
-        self._apps.append(app)
         # Use the newstyle teardown_appcontext if it's available,
         # otherwise fall back to the request context.
         if hasattr(app, 'teardown_appcontext'):
@@ -119,10 +101,10 @@ class FlaskCuttlePool(object):
         if not hasattr(app, 'extensions'):
             app.extensions = {}
 
-        if hasattr(app.extensions, 'cuttlepool'):
-            raise RuntimeError('A pool has already been attached to this app.')
+        if 'cuttlepool' not in app.extensions:
+            app.extensions['cuttlepool'] = {}
 
-        app.extensions['cuttlepool'] = None
+        app.extensions['cuttlepool'][id(self)] = None
 
     def _get_app(self):
         """
@@ -136,7 +118,7 @@ class FlaskCuttlePool(object):
         else:
             raise RuntimeError('No application found.')
 
-        if app not in self._apps:
+        if id(self) not in app.extensions['cuttlepool']:
             raise RuntimeError('This FlaskCuttlePool instance does not have '
                                'access to the current app. Initialize the app '
                                'on the instance with init_app().')
@@ -145,9 +127,22 @@ class FlaskCuttlePool(object):
 
     def _make_pool(self, app):
         """
-        Make a CuttlePool instance.
+        Make a CuttlePool instance. All configuration options on ``app.config``
+        of the form ``CUTTLEPOOL_<KEY>`` will be used as connection arguments
+        for the underlying driver. ``<KEY>`` will be converted to lowercase
+        such that ``app.config['CUTTLEPOOL_<KEY>'] = <value>`` will be passed
+        to the connection driver as ``<key>=<value>``.
 
-        :param app: A Flask app.
+        :param Flask app: A Flask ``app`` object.
+
+        :Example:
+
+        # pool will connect to rons_house.
+        pool = FlaskCuttlePool(sqlite3.connect, database='rons_house')
+        app = Flask(__name__)
+        app.config['CUTTLEPOOL_DATABASE'] = 'steakhouse'
+        # pool will connect to steakhouse instead.
+        pool.init_app(app)
         """
         prefix = 'CUTTLEPOOL_'
         kwargs = self._cuttlepool_kwargs.copy()
@@ -179,17 +174,17 @@ class FlaskCuttlePool(object):
 
     def get_pool(self):
         """
-        Gets the pool on the current application. Creates the pool is one
+        Gets the pool on the current application. Creates the pool if one
         doesn't exist.
         """
         app = self._get_app()
 
         with self._lock:
-            pool = app.extensions['cuttlepool']
+            pool = app.extensions['cuttlepool'][id(self)]
 
             if pool is None:
                 pool = self._make_pool(app)
-                app.extensions['cuttlepool'] = pool
+                app.extensions['cuttlepool'][id(self)] = pool
 
             return pool
 
