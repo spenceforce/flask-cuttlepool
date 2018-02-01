@@ -234,10 +234,12 @@ class FlaskCuttlePool(object):
             if not hasattr(ctx, 'cuttlepool_connection'):
                 ctx.cuttlepool_connection = self.get_connection()
 
-            else:
-                pool = self.get_pool()
-                if not pool.ping(ctx.cuttlepool_connection):
-                    ctx.cuttlepool_connection.close()
-                    ctx.cuttlepool_connection = self.connection
+            con = ctx.cuttlepool_connection
+
+            pool = self.get_pool()
+            # Ensure connection is open.
+            if con._connection is None or not pool.ping(con):
+                ctx.cuttlepool_connection.close()
+                ctx.cuttlepool_connection = self.get_connection()
 
             return ctx.cuttlepool_connection

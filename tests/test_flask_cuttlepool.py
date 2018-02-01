@@ -244,6 +244,15 @@ def test_connection_app_ctx(app, pool_one):
     assert pool_one.connection is None
 
 
+def test_connection_after_close(app, pool_one):
+    """Ensure connection property properly handles closed connections."""
+    with app.app_context():
+        con = pool_one.connection
+        con.close()
+        assert con is not pool_one.connection
+        assert pool_one.connection.open
+
+
 def test_connection_multiple_app_ctx(app, pool_one):
     """
     Tests connection property saves a different connection to coexisting app
