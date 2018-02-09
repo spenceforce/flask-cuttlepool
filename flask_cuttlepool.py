@@ -157,6 +157,20 @@ class FlaskCuttlePool(object):
 
         return self._CuttlePool(self._connect, **kwargs)
 
+    def commit(self):
+        """
+        Commits the connection on the application context.
+
+        :raises RuntimeError: If there is no connection on the application
+            context.
+        """
+        ctx = stack.top
+
+        if hasattr(ctx, 'cuttlepool_connection'):
+            return ctx.cuttlepool_connection.commit()
+
+        raise RuntimeError("There's no connection on the application context.")
+
     def cursor(self):
         """
         Gets a cursor from the connection on the appplication context. It is

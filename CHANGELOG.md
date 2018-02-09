@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## [Unreleased]
+### Added
+- Convenience method for committing transactions on the connection on the
+  application context.
 
 ## [0.2.0] - 2018-01-30
 ### Added

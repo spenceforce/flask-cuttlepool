@@ -23,6 +23,12 @@ class MockConnection(object):
         """
         self.open = False
 
+    def commit(self):
+        """
+        "Commits" the transaction.
+        """
+        return MockCommit()
+
     def cursor(self):
         """
         Returns a mock Cursor object.
@@ -51,6 +57,14 @@ class MockCursor(object):
         "Executes" a query.
         """
         pass
+
+
+class MockCommit(object):
+    """
+    A mock Commit object. Strictly used for testing methods involving commits.
+    """
+    def __eq__(self, other):
+        return type(self) == type(other)
 
 
 def connect(**kwargs):

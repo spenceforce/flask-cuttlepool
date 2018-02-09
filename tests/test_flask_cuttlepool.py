@@ -268,6 +268,31 @@ def test_connection_multiple_app_ctx(app, pool_one):
         assert con1 is pool_one.connection
 
 
+def test_commit(app, pool_one):
+    """Tests the commit convenience method."""
+    with app.app_context():
+        commit1 = pool_one.connection.commit()
+        commit2 = pool_one.commit()
+        assert commit1 is not commit2
+        assert commit1 == commit2
+
+
+def test_commit_error(app, pool_one):
+    """
+    Tests a RuntimeError is raised when there's no connection on the
+    application context.
+    """
+    with pytest.raises(RuntimeError):
+        # Should raise error since there's no application context.
+        pool_one.commit()
+
+    with app.app_context():
+        with pytest.raises(RuntimeError):
+            # Should raise error since there's no connection on the application
+            # context.
+            pool_one.commit()
+
+
 def test_cursor(app, pool_one):
     """Tests a cursor is returned."""
     with app.app_context():
