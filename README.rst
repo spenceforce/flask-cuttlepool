@@ -82,8 +82,10 @@ to call ``close()`` on a connection retrieved from the ``connection`` getter,
 but it's ok if ``close()`` is called. Connections retrieved with
 ``get_connection()`` should be explicitly closed.
 
-The convenience method ``cursor()`` will return a ``Cursor`` instance for the
-connection stored on the application context.
+The convenience property ``cursor`` will return the underlying cursor factory
+which can be used to generate ``Cursor`` instances for the connection stored on
+the application context. It accepts any arguments that the connection's cursor
+factory accepts.
 
 A full example looks like::
 

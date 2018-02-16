@@ -29,11 +29,15 @@ class MockConnection(object):
         """
         return MockCommit()
 
-    def cursor(self):
+    def cursor(self, cursorclass=None, **kwargs):
         """
         Returns a mock Cursor object.
+
+        :param \**kwargs: Accepts anything.
         """
-        return MockCursor(self)
+        if cursorclass is None:
+            cursorclass = MockCursor
+        return cursorclass(self)
 
 
 class MockCursor(object):

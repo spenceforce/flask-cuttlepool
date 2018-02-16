@@ -300,6 +300,16 @@ def test_cursor(app, pool_one):
         assert isinstance(cur, mocksql.MockCursor)
 
 
+def test_cursor_accepts_arguments(app, pool_one):
+    """Tests a cursor can accept arguments."""
+    class SuperMockCursor(mocksql.MockCursor):
+        pass
+
+    with app.app_context():
+        cur = pool_one.cursor(cursorclass=SuperMockCursor)
+        assert isinstance(cur, SuperMockCursor)
+
+
 def test_ping_decorator(app, pool_one):
     """Tests the ping decorator is used by the connection pool."""
     ping_str = "Decorated ping"

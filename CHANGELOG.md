@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Convenience method for committing transactions on the connection on the
   application context.
 
+### Changed
+- Make `cursor()` a property instead of a method.
+
 ## [0.2.0] - 2018-01-30
 ### Added
 - Import `PoolConnection` for simple, uniform import from `flask_cuttlepool`.
@@ -18,10 +21,14 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Decorators for attaching `ping()` and `normalize_connection()` methods to
   connection pools.
 - Support for multiple pools per Flask app object.
+- Convenience method for getting cursors from connections stored on the
+  application context.
+
 ### Changed
 - Upgrade minimum version of `cuttlepool` to 0.6.0.
 - Get all configuration options starting with `CUTTLEPOOL_` from `app.config`
   instead of explicitly passing them to `__init__()` or `init_app()`.
+
 ### Removed
 - Custom exceptions.
 
