@@ -9,7 +9,7 @@ example given in the `Flask Extension Development
 :license: BSD 3-clause, see LICENSE for details.
 """
 
-__version__ = '0.2.1-dev'
+__version__ = '0.2.1'
 
 
 from threading import RLock
