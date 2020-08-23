@@ -1,8 +1,18 @@
+##########
+DEPRECATED
+##########
+
+Don't worry, `CuttlePool <https://github.com/smitchell556/cuttlepool>`_ is still active.
+
+Having said that, I don't have the time or desire to continue maintaining this project. CuttlePool should work just fine as a global object in a flask project and if you're already using Flask-CuttlePool I recommend migrating to CuttlePool.
+
+If somebody wants to maintain this project and continue publishing to PyPI, please reach out and I will relinquish the name `flask-cuttlepool` on PyPI if you want it.
+
 ################
 Flask-CuttlePool
 ################
 
-Flask-CuttlePool provides a convenient interface for using `Cuttle Pool
+Flask-CuttlePool provides a convenient interface for using `CuttlePool
 <https://github.com/smitchell556/cuttlepool>`_ with Flask.
 
 How-to Guide
@@ -53,7 +63,7 @@ lowercase.
 ``ping`` callback is used to check if a connection is still open. The
 ``normalize_connection`` callback ensures each connection has the same state
 when it is retrieved from the pool. For more about these methods, see the
-`Cuttle Pool How-to Guide
+`CuttlePool How-to Guide
 <https://github.com/smitchell556/cuttlepool#how-to-guide>`_.
 
 Continuing with the above example, these callbacks could be implemented like
