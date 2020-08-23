@@ -6,7 +6,7 @@ Don't worry, `CuttlePool <https://github.com/smitchell556/cuttlepool>`_ is still
 
 Having said that, I don't have the time or desire to continue maintaining this project. CuttlePool should work just fine as a global object in a flask project and if you're already using Flask-CuttlePool I recommend migrating to CuttlePool.
 
-If somebody wants to maintain this project and continue publishing to PyPI, please reach out and I will relinquish the name `flask-cuttlepool` on PyPI if you want it.
+If somebody wants to maintain this project and continue publishing to PyPI, please reach out and I will relinquish the name ``flask-cuttlepool`` on PyPI if you want it.
 
 ################
 Flask-CuttlePool
